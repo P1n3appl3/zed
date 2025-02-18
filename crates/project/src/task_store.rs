@@ -7,7 +7,7 @@ use futures::StreamExt as _;
 use gpui::{App, AsyncApp, Context, Entity, EventEmitter, Task, WeakEntity};
 use language::{
     proto::{deserialize_anchor, serialize_anchor},
-    ContextProvider as _, LanguageToolchainStore, Location,
+    ContextProvider as _, LanguageToolchainStore, Location, TaskLocation,
 };
 use rpc::{proto, AnyProtoClient, TypedEnvelope};
 use settings::{watch_config_file, SettingsLocation};
@@ -111,9 +111,13 @@ impl TaskStore {
             })?
             .await?;
 
-        let location = Location {
-            buffer,
-            range: start..end,
+        let location = TaskLocation {
+            location: Location {
+                buffer,
+                range: start..end,
+            },
+            // TODO kb
+            something_else: (),
         };
         let context_task = store.update(&mut cx, |store, cx| {
             let captured_variables = {
@@ -125,8 +129,8 @@ impl TaskStore {
                         .filter_map(|(k, v)| Some((k.parse().log_err()?, v))),
                 );
 
-                let snapshot = location.buffer.read(cx).snapshot();
-                let range = location.range.to_offset(&snapshot);
+                let snapshot = location.location.buffer.read(cx).snapshot();
+                let range = location.location.range.to_offset(&snapshot);
 
                 for range in snapshot.runnable_ranges(range) {
                     for (capture_name, value) in range.extra_captures {
@@ -197,7 +201,7 @@ impl TaskStore {
     pub fn task_context_for_location(
         &self,
         captured_variables: TaskVariables,
-        location: Location,
+        location: TaskLocation,
         cx: &mut App,
     ) -> Task<Option<TaskContext>> {
         match self {
@@ -318,10 +322,15 @@ fn local_task_context_for_location(
     toolchain_store: Arc<dyn LanguageToolchainStore>,
     environment: Entity<ProjectEnvironment>,
     captured_variables: TaskVariables,
-    location: Location,
+    location: TaskLocation,
     cx: &App,
 ) -> Task<Option<TaskContext>> {
-    let worktree_id = location.buffer.read(cx).file().map(|f| f.worktree_id(cx));
+    let worktree_id = location
+        .location
+        .buffer
+        .read(cx)
+        .file()
+        .map(|f| f.worktree_id(cx));
     let worktree_abs_path = worktree_id
         .and_then(|worktree_id| worktree_store.read(cx).worktree_for_id(worktree_id, cx))
         .and_then(|worktree| worktree.read(cx).root_dir());
@@ -365,7 +374,7 @@ fn remote_task_context_for_location(
     upstream_client: AnyProtoClient,
     worktree_store: Entity<WorktreeStore>,
     captured_variables: TaskVariables,
-    location: Location,
+    location: TaskLocation,
     toolchain_store: Arc<dyn LanguageToolchainStore>,
     cx: &mut App,
 ) -> Task<Option<TaskContext>> {
@@ -388,14 +397,14 @@ fn remote_task_context_for_location(
         remote_context.extend(captured_variables);
 
         let buffer_id = cx
-            .update(|cx| location.buffer.read(cx).remote_id().to_proto())
+            .update(|cx| location.location.buffer.read(cx).remote_id().to_proto())
             .ok()?;
         let context_task = upstream_client.request(proto::TaskContextForLocation {
             project_id,
             location: Some(proto::Location {
                 buffer_id,
-                start: Some(serialize_anchor(&location.range.start)),
-                end: Some(serialize_anchor(&location.range.end)),
+                start: Some(serialize_anchor(&location.location.range.start)),
+                end: Some(serialize_anchor(&location.location.range.end)),
             }),
             task_variables: remote_context
                 .into_iter()
@@ -425,13 +434,14 @@ fn remote_task_context_for_location(
 
 fn combine_task_variables(
     mut captured_variables: TaskVariables,
-    location: Location,
+    location: TaskLocation,
     project_env: Option<HashMap<String, String>>,
     baseline: BasicContextProvider,
     toolchain_store: Arc<dyn LanguageToolchainStore>,
     cx: &mut App,
 ) -> Task<anyhow::Result<TaskVariables>> {
     let language_context_provider = location
+        .location
         .buffer
         .read(cx)
         .language()

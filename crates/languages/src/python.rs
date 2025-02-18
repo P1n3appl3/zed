@@ -5,12 +5,12 @@ use collections::HashMap;
 use gpui::{App, Task};
 use gpui::{AsyncApp, SharedString};
 use language::language_settings::language_settings;
-use language::LanguageName;
 use language::LanguageToolchainStore;
 use language::Toolchain;
 use language::ToolchainList;
 use language::ToolchainLister;
 use language::{ContextProvider, LspAdapter, LspAdapterDelegate};
+use language::{LanguageName, TaskLocation};
 use lsp::LanguageServerBinary;
 use lsp::LanguageServerName;
 use node_runtime::NodeRuntime;
@@ -323,13 +323,13 @@ impl ContextProvider for PythonContextProvider {
     fn build_context(
         &self,
         variables: &task::TaskVariables,
-        location: &project::Location,
+        location: &TaskLocation,
         _: Option<HashMap<String, String>>,
         toolchains: Arc<dyn LanguageToolchainStore>,
         cx: &mut gpui::App,
     ) -> Task<Result<task::TaskVariables>> {
         let test_target = {
-            let test_runner = selected_test_runner(location.buffer.read(cx).file(), cx);
+            let test_runner = selected_test_runner(location.location.buffer.read(cx).file(), cx);
 
             let runner = match test_runner {
                 TestRunner::UNITTEST => self.build_unittest_target(variables),
@@ -338,7 +338,12 @@ impl ContextProvider for PythonContextProvider {
             runner
         };
 
-        let worktree_id = location.buffer.read(cx).file().map(|f| f.worktree_id(cx));
+        let worktree_id = location
+            .location
+            .buffer
+            .read(cx)
+            .file()
+            .map(|f| f.worktree_id(cx));
         cx.spawn(move |mut cx| async move {
             let active_toolchain = if let Some(worktree_id) = worktree_id {
                 toolchains

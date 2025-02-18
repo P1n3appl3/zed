@@ -151,6 +151,12 @@ pub struct Location {
     pub range: Range<Anchor>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TaskLocation {
+    pub location: Location,
+    pub something_else: (),
+}
+
 /// Represents a Language Server, with certain cached sync properties.
 /// Uses [`LspAdapter`] under the hood, but calls all 'static' methods
 /// once at startup, and caches the results.

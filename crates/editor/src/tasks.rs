@@ -1,6 +1,7 @@
 use crate::Editor;
 
 use gpui::{App, Task as AsyncTask, Window};
+use language::TaskLocation;
 use project::Location;
 use task::{TaskContext, TaskVariables, VariableName};
 use text::{ToOffset, ToPoint};
@@ -37,16 +38,20 @@ fn task_context_with_editor(
         .buffer_snapshot
         .anchor_after(selection_range.end)
         .text_anchor;
-    let location = Location {
-        buffer,
-        range: start..end,
+    let location = TaskLocation {
+        location: Location {
+            buffer,
+            range: start..end,
+        },
+        // TODO kb
+        something_else: (),
     };
     let captured_variables = {
         let mut variables = TaskVariables::default();
-        let buffer = location.buffer.read(cx);
+        let buffer = location.location.buffer.read(cx);
         let buffer_id = buffer.remote_id();
         let snapshot = buffer.snapshot();
-        let starting_point = location.range.start.to_point(&snapshot);
+        let starting_point = location.location.range.start.to_point(&snapshot);
         let starting_offset = starting_point.to_offset(&snapshot);
         for (_, tasks) in editor
             .tasks

@@ -1,6 +1,6 @@
 use std::{ops::Range, sync::Arc};
 
-use crate::{LanguageToolchainStore, Location, Runnable};
+use crate::{LanguageToolchainStore, Runnable, TaskLocation};
 
 use anyhow::Result;
 use collections::HashMap;
@@ -24,7 +24,7 @@ pub trait ContextProvider: Send + Sync {
     fn build_context(
         &self,
         _variables: &TaskVariables,
-        _location: &Location,
+        _location: &TaskLocation,
         _project_env: Option<HashMap<String, String>>,
         _toolchains: Arc<dyn LanguageToolchainStore>,
         _cx: &mut App,

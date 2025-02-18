@@ -12,7 +12,7 @@ use anyhow::{Context as _, Result};
 use collections::{HashMap, HashSet, VecDeque};
 use gpui::{App, AppContext as _, Entity, SharedString, Task};
 use itertools::Itertools;
-use language::{ContextProvider, File, Language, LanguageToolchainStore, Location};
+use language::{ContextProvider, File, Language, LanguageToolchainStore, TaskLocation};
 use settings::{parse_json_with_comments, SettingsLocation};
 use task::{
     ResolvedTask, TaskContext, TaskId, TaskTemplate, TaskTemplates, TaskVariables, VariableName,
@@ -113,22 +113,26 @@ impl Inventory {
     pub fn used_and_current_resolved_tasks(
         &self,
         worktree: Option<WorktreeId>,
-        location: Option<Location>,
+        location: Option<TaskLocation>,
         task_context: &TaskContext,
         cx: &App,
     ) -> (
         Vec<(TaskSourceKind, ResolvedTask)>,
         Vec<(TaskSourceKind, ResolvedTask)>,
     ) {
-        let language = location
-            .as_ref()
-            .and_then(|location| location.buffer.read(cx).language_at(location.range.start));
+        let language = location.as_ref().and_then(|location| {
+            location
+                .location
+                .buffer
+                .read(cx)
+                .language_at(location.location.range.start)
+        });
         let task_source_kind = language.as_ref().map(|language| TaskSourceKind::Language {
             name: language.name().into(),
         });
         let file = location
             .as_ref()
-            .and_then(|location| location.buffer.read(cx).file().cloned());
+            .and_then(|location| location.location.buffer.read(cx).file().cloned());
 
         let mut task_labels_to_ids = HashMap::<String, HashSet<TaskId>>::default();
         let mut lru_score = 0_u32;
@@ -450,14 +454,14 @@ impl ContextProvider for BasicContextProvider {
     fn build_context(
         &self,
         _: &TaskVariables,
-        location: &Location,
+        location: &TaskLocation,
         _: Option<HashMap<String, String>>,
         _: Arc<dyn LanguageToolchainStore>,
         cx: &mut App,
     ) -> Task<Result<TaskVariables>> {
-        let buffer = location.buffer.read(cx);
+        let buffer = location.location.buffer.read(cx);
         let buffer_snapshot = buffer.snapshot();
-        let symbols = buffer_snapshot.symbols_containing(location.range.start, None);
+        let symbols = buffer_snapshot.symbols_containing(location.location.range.start, None);
         let symbol = symbols.unwrap_or_default().last().map(|symbol| {
             let range = symbol
                 .name_ranges
@@ -471,11 +475,11 @@ impl ContextProvider for BasicContextProvider {
             .file()
             .and_then(|file| file.as_local())
             .map(|file| file.abs_path(cx).to_sanitized_string());
-        let Point { row, column } = location.range.start.to_point(&buffer_snapshot);
+        let Point { row, column } = location.location.range.start.to_point(&buffer_snapshot);
         let row = row + 1;
         let column = column + 1;
         let selected_text = buffer
-            .chars_for_range(location.range.clone())
+            .chars_for_range(location.location.range.clone())
             .collect::<String>();
 
         let mut task_variables = TaskVariables::from_iter([

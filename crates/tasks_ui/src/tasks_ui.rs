@@ -1,6 +1,7 @@
 use ::settings::Settings;
 use editor::{tasks::task_context, Editor};
 use gpui::{App, Context, Task as AsyncTask, Window};
+use language::TaskLocation;
 use modal::{TaskOverrides, TasksModal};
 use project::{Location, WorktreeId};
 use task::{RevealTarget, TaskId};
@@ -171,10 +172,10 @@ fn spawn_task_with_name(
             let (worktree, location) = active_item_selection_properties(workspace, cx);
             let (file, language) = location
                 .map(|location| {
-                    let buffer = location.buffer.read(cx);
+                    let buffer = location.location.buffer.read(cx);
                     (
                         buffer.file().cloned(),
-                        buffer.language_at(location.range.start),
+                        buffer.language_at(location.location.range.start),
                     )
                 })
                 .unwrap_or_default();
@@ -225,7 +226,7 @@ fn spawn_task_with_name(
 fn active_item_selection_properties(
     workspace: &Workspace,
     cx: &mut App,
-) -> (Option<WorktreeId>, Option<Location>) {
+) -> (Option<WorktreeId>, Option<TaskLocation>) {
     let active_item = workspace.active_item(cx);
     let worktree_id = active_item
         .as_ref()
@@ -247,6 +248,11 @@ fn active_item_selection_properties(
                     range: buffer_anchor..buffer_anchor,
                 })
             })
+        })
+        .map(|location| TaskLocation {
+            location,
+            // TODO kb
+            something_else: (),
         });
     (worktree_id, location)
 }
