@@ -497,9 +497,9 @@ impl ContextProvider for BasicContextProvider {
                     self.worktree_store
                         .read(cx)
                         .worktree_for_id(worktree_id, cx)
-                        .map(|worktree| worktree.read(cx).root_dir())
+                        .and_then(|worktree| worktree.read(cx).root_dir())
                 });
-        if let Some(Some(worktree_path)) = worktree_root_dir {
+        if let Some(worktree_path) = worktree_root_dir {
             task_variables.insert(
                 VariableName::WorktreeRoot,
                 worktree_path.to_sanitized_string(),
