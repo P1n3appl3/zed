@@ -472,6 +472,9 @@ const RUST_BIN_KIND_TASK_VARIABLE: VariableName =
 const RUST_MAIN_FUNCTION_TASK_VARIABLE: VariableName =
     VariableName::Custom(Cow::Borrowed("_rust_main_function_end"));
 
+const RUST_TEST_STEM_TASK_VARIABLE: VariableName =
+    VariableName::Custom(Cow::Borrowed("RUST_TEST_STEM"));
+
 impl ContextProvider for RustContextProvider {
     fn build_context(
         &self,
@@ -493,18 +496,30 @@ impl ContextProvider for RustContextProvider {
             .get(&RUST_MAIN_FUNCTION_TASK_VARIABLE)
             .is_some();
 
+        let mut variables = TaskVariables::default();
+        if let Some(stem) = task_variables.get(&VariableName::Stem) {
+            variables.insert(
+                RUST_TEST_STEM_TASK_VARIABLE,
+                if stem == "lib" {
+                    "--lib".to_owned()
+                } else {
+                    stem.to_owned()
+                },
+            );
+        };
+
         if is_main_function {
             if let Some(target) = local_abs_path.and_then(|path| {
                 package_name_and_bin_name_from_abs_path(path, project_env.as_ref())
             }) {
-                return Task::ready(Ok(TaskVariables::from_iter([
+                variables.extend(TaskVariables::from_iter([
                     (RUST_PACKAGE_TASK_VARIABLE.clone(), target.package_name),
                     (RUST_BIN_NAME_TASK_VARIABLE.clone(), target.target_name),
                     (
                         RUST_BIN_KIND_TASK_VARIABLE.clone(),
                         target.target_kind.to_string(),
                     ),
-                ])));
+                ]));
             }
         }
 
@@ -512,13 +527,13 @@ impl ContextProvider for RustContextProvider {
             .and_then(|local_abs_path| local_abs_path.parent())
             .and_then(|path| human_readable_package_name(path, project_env.as_ref()))
         {
-            return Task::ready(Ok(TaskVariables::from_iter([(
+            variables.extend(TaskVariables::from_iter([(
                 RUST_PACKAGE_TASK_VARIABLE.clone(),
                 package_name,
-            )])));
+            )]));
         }
 
-        Task::ready(Ok(TaskVariables::default()))
+        Task::ready(Ok(variables))
     }
 
     fn associated_tasks(
@@ -589,7 +604,7 @@ impl ContextProvider for RustContextProvider {
                     "test".into(),
                     "-p".into(),
                     RUST_PACKAGE_TASK_VARIABLE.template_value(),
-                    VariableName::Stem.template_value(),
+                    RUST_TEST_STEM_TASK_VARIABLE.template_value(),
                 ],
                 tags: vec!["rust-mod-test".to_owned()],
                 cwd: Some("$ZED_DIRNAME".to_owned()),
