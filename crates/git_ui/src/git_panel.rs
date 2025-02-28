@@ -2039,6 +2039,7 @@ impl GitPanel {
             .unwrap_or_else(|| "<no branch>".into());
 
         let branch_selector = Button::new("branch-selector", branch)
+            .truncate_label()
             .color(Color::Muted)
             .style(ButtonStyle::Subtle)
             .icon(IconName::GitBranch)
@@ -2079,19 +2080,25 @@ impl GitPanel {
                             .absolute()
                             .bottom_0()
                             .left_2()
-                            .h(footer_size)
-                            .flex_none()
-                            .child(branch_selector),
-                    )
-                    .child(
-                        h_flex()
-                            .absolute()
-                            .bottom_0()
                             .right_2()
-                            .h(footer_size)
+                            .gap_3()
                             .flex_none()
-                            .children(enable_coauthors)
-                            .child(commit_button),
+                            .h(footer_size)
+                            .justify_between()
+                            .child(
+                                h_flex()
+                                    // .text_overflow(TextOverflow::Ellipsis("."))
+                                    .overflow_x_hidden()
+                                    .flex_shrink()
+                                    .child(branch_selector),
+                            )
+                            // .child(h_flex())
+                            .child(
+                                h_flex()
+                                    .right_0()
+                                    .children(enable_coauthors)
+                                    .child(commit_button),
+                            )
                     )
             })
     }

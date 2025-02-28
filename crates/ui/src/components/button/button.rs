@@ -88,6 +88,7 @@ pub struct Button {
     label_size: Option<LabelSize>,
     selected_label: Option<SharedString>,
     selected_label_color: Option<Color>,
+    truncate_label: bool,
     icon: Option<IconName>,
     icon_position: Option<IconPosition>,
     icon_size: Option<IconSize>,
@@ -114,6 +115,7 @@ impl Button {
             label_size: None,
             selected_label: None,
             selected_label_color: None,
+            truncate_label: false,
             icon: None,
             icon_position: None,
             icon_size: None,
@@ -147,6 +149,12 @@ impl Button {
     /// Sets the label color used when the button is in a selected state.
     pub fn selected_label_color(mut self, color: impl Into<Option<Color>>) -> Self {
         self.selected_label_color = color.into();
+        self
+    }
+
+    /// Truncates overflowing text in the label with an ellipsis (`…`) if needed.
+    pub fn truncate_label(mut self) -> Self {
+        self.truncate_label = true;
         self
     }
 
@@ -437,6 +445,7 @@ impl RenderOnce for Button {
                                 .color(label_color)
                                 .size(self.label_size.unwrap_or_default())
                                 .when_some(self.alpha, |this, alpha| this.alpha(alpha))
+                                .when(self.truncate_label, |this| this.text_ellipsis())
                                 .line_height_style(LineHeightStyle::UiLabel),
                         )
                         .children(self.key_binding),
