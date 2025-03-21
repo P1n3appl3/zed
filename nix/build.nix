@@ -38,7 +38,7 @@
   nodejs_22,
 
   withGLES ? false,
-  profile ? "release",
+  profile ? "dev", # TODO: switch back
 }:
 
 assert withGLES -> stdenv.hostPlatform.isLinux;
@@ -133,7 +133,7 @@ let
           (darwinMinVersionHook "10.15")
         ];
 
-      cargoExtraArgs = "--package=zed --package=cli --features=gpui/runtime_shaders";
+      cargoExtraArgs = "-p zed -p cli --locked --features=gpui/runtime_shaders";
 
       env = {
         ZSTD_SYS_USE_PKG_CONFIG = true;
@@ -146,21 +146,28 @@ let
         ZED_UPDATE_EXPLANATION = "Zed has been installed using Nix. Auto-updates have thus been disabled.";
         RELEASE_VERSION = version;
         RUSTFLAGS = if withGLES then "--cfg gles" else "";
-        # these libraries are used with dlopen so putting them in buildInputs isn't enough
-        NIX_LDFLAGS = "-rpath ${
+        LK_CUSTOM_WEBRTC = livekit-libwebrtc;
+
+        CARGO_PROFILE = profile;
+        # need to handle some profiles specially https://github.com/rust-lang/cargo/issues/11053
+        TARGET_DIR = "target/" + (if profile == "dev" then "debug" else profile);
+
+        # for some reason these deps being in buildInputs isn't enough, the only thing
+        # about them that's special is that they're manually dlopened at runtime
+        NIX_LDFLAGS = lib.optionalString stdenv.hostPlatform.isLinux "-rpath ${
           lib.makeLibraryPath [
             gpu-lib
             wayland
           ]
         }";
-        LK_CUSTOM_WEBRTC = livekit-libwebrtc;
-        CARGO_PROFILE = profile;
-        # need to handle some profiles specially https://github.com/rust-lang/cargo/issues/11053
-        TARGET_DIR = "target/" + (if profile == "dev" then "debug" else profile);
       };
 
       # prevent nix from removing the "unused" wayland/gpu-lib rpaths
-      dontPatchELF = true;
+      dontPatchELF = stdenv.hostPlatform.isLinux;
+
+      # TODO: try craneLib.cargoNextest separate output
+      # for now we're not worried about running our test suite (or tests for deps) in the nix sandbox
+      doCheck = false;
 
       cargoVendorDir = craneLib.vendorCargoDeps {
         inherit src cargoLock;
@@ -184,22 +191,7 @@ let
             drv;
       };
     };
-  cargoArtifacts = craneLib.buildDepsOnly (
-    commonArgs
-    // {
-      # TODO: figure out why the main derivation is still rebuilding deps...
-      # disable pre-building the deps for now
-      buildPhaseCargoCommand = "true";
-
-      # forcibly inhibit `doInstallCargoArtifacts`...
-      # https://github.com/ipetkov/crane/blob/1d19e2ec7a29dcc25845eec5f1527aaf275ec23e/lib/setupHooks/installCargoArtifactsHook.sh#L111
-      #
-      # it is, unfortunately, not overridable in `buildDepsOnly`:
-      # https://github.com/ipetkov/crane/blob/1d19e2ec7a29dcc25845eec5f1527aaf275ec23e/lib/buildDepsOnly.nix#L85
-      preBuild = "postInstallHooks=()";
-      doCheck = false;
-    }
-  );
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 in
 craneLib.buildPackage (
   lib.recursiveUpdate commonArgs {
@@ -219,10 +211,6 @@ craneLib.buildPackage (
       ALLOW_MISSING_LICENSES=yes bash script/generate-licenses
       echo nightly > crates/zed/RELEASE_CHANNEL
     '';
-
-    # TODO: try craneLib.cargoNextest separate output
-    # for now we're not worried about running our test suite in the nix sandbox
-    doCheck = false;
 
     installPhase =
       if stdenv.hostPlatform.isDarwin then
