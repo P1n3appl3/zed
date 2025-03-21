@@ -31,6 +31,7 @@ log.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 regex.workspace = true
 reqwest.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 gpui.workspace = true

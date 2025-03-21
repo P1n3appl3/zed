@@ -39,6 +39,7 @@ util.workspace = true
 workspace.workspace = true
 worktree.workspace = true
 zed_actions.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 search = { workspace = true, features = ["test-support"] }

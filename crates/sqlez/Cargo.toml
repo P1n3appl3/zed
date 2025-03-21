@@ -20,3 +20,4 @@ sqlformat.workspace = true
 thread_local = "1.1.4"
 util.workspace = true
 uuid.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

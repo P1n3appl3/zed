@@ -26,6 +26,7 @@ smol.workspace = true
 sqlez.workspace = true
 sqlez_macros.workspace = true
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

@@ -167,6 +167,7 @@ members = [
     "crates/vim_mode_setting",
     "crates/welcome",
     "crates/workspace",
+    "crates/workspace-hack",
     "crates/worktree",
     "crates/zed",
     "crates/zed_actions",

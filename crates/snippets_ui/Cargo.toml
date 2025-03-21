@@ -20,3 +20,4 @@ picker.workspace = true
 ui.workspace = true
 util.workspace = true
 workspace.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

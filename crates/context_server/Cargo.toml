@@ -32,3 +32,4 @@ settings.workspace = true
 smol.workspace = true
 url = { workspace = true, features = ["serde"] }
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

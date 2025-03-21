@@ -42,3 +42,4 @@ serde_json_lenient.workspace = true
 settings.workspace = true
 smol.workspace = true
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

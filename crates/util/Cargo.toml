@@ -36,6 +36,7 @@ take-until.workspace = true
 tempfile = { workspace = true, optional = true }
 unicase.workspace = true
 util_macros = { workspace = true, optional = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [target.'cfg(unix)'.dependencies]
 libc.workspace = true

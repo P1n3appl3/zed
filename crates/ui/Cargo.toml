@@ -27,6 +27,7 @@ strum = { workspace = true, features = ["derive"] }
 theme.workspace = true
 ui_macros.workspace = true
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [target.'cfg(windows)'.dependencies]
 windows.workspace = true

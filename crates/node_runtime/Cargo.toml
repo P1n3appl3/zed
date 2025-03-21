@@ -34,6 +34,7 @@ tempfile = { workspace = true, optional = true }
 util.workspace = true
 walkdir = "2.5.0"
 which.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [target.'cfg(windows)'.dependencies]
 async-std = { version = "1.12.0", features = ["unstable"] }

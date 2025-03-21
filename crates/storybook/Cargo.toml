@@ -36,6 +36,7 @@ theme.workspace = true
 title_bar = { workspace = true, features = ["stories"] }
 ui = { workspace = true, features = ["stories"] }
 reqwest_client.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }

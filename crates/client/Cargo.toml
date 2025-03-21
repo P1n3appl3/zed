@@ -51,6 +51,7 @@ url.workspace = true
 util.workspace = true
 worktree.workspace = true
 telemetry.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 clock = { workspace = true, features = ["test-support"] }

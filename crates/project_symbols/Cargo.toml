@@ -25,6 +25,7 @@ settings.workspace = true
 theme.workspace = true
 util.workspace = true
 workspace.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }

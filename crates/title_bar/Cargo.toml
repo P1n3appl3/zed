@@ -49,6 +49,7 @@ workspace.workspace = true
 zed_actions.workspace = true
 zeta.workspace = true
 git_ui.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [target.'cfg(windows)'.dependencies]
 windows.workspace = true

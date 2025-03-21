@@ -37,6 +37,7 @@ streaming-iterator.workspace = true
 tree-sitter-json.workspace = true
 tree-sitter.workspace = true
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 fs = { workspace = true, features = ["test-support"] }

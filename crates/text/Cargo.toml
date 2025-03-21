@@ -28,6 +28,7 @@ rope.workspace = true
 smallvec.workspace = true
 sum_tree.workspace = true
 util.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 collections = { workspace = true, features = ["test-support"] }
