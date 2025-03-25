@@ -96,13 +96,14 @@ let
         ++ lib.optionals stdenv.hostPlatform.isDarwin [
           # TODO: move to overlay so it's usable in the shell
           (cargo-bundle.overrideAttrs (old: {
-            version = "0.6.0-zed";
+            version = "0.6.1-zed";
             src = fetchFromGitHub {
               owner = "zed-industries";
               repo = "cargo-bundle";
               rev = "zed-deploy";
-              hash = "sha256-OxYdTSiR9ueCvtt7Y2OJkvzwxxnxu453cMS+l/Bi5hM=";
+              hash = "sha256-cSvW0ND148AGdIGWg/ku0yIacVgW+9f1Nsi+kAQxVrI=";
             };
+            cargoHash = "";
           }))
         ];
 
