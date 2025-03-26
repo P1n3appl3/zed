@@ -284,6 +284,8 @@ impl ActivityIndicator {
             });
         }
 
+        // Show any long-running git command
+
         // Show any language server installation info.
         let mut downloading = SmallVec::<[_; 3]>::new();
         let mut checking_for_update = SmallVec::<[_; 3]>::new();
