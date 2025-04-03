@@ -6,6 +6,7 @@
 
   rust-analyzer,
   cargo-nextest,
+  cargo-about,
   cargo-hakari,
   cargo-machete,
   nixfmt-rfc-style,
@@ -17,6 +18,7 @@
   packages = [
     rust-analyzer
     cargo-nextest
+    cargo-about
     cargo-hakari
     cargo-machete
     nixfmt-rfc-style

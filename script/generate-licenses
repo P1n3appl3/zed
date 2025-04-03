@@ -18,7 +18,7 @@ echo -n "" >"$OUTPUT_FILE"
     echo -e "\n# ###### CODE LICENSES ######\n"
 } >>"$OUTPUT_FILE"
 
-if ! cargo about --version | grep "cargo-about $CARGO_ABOUT_VERSION" 2>&1 >/dev/null; then
+if ! cargo about --version | grep "cargo-about $CARGO_ABOUT_VERSION" >/dev/null 2>&1; then
     echo "Installing cargo-about@^$CARGO_ABOUT_VERSION..."
     cargo install "cargo-about@^$CARGO_ABOUT_VERSION"
 else
@@ -28,7 +28,7 @@ fi
 echo "Generating cargo licenses"
 if [ -z "${ALLOW_MISSING_LICENSES-}" ]; then FAIL_FLAG=--fail; else FAIL_FLAG=""; fi
 set -x
-cargo about generate \
+cargo about generate --frozen \
     $FAIL_FLAG \
     -c script/licenses/zed-licenses.toml \
     "$TEMPLATE_FILE" >>"$OUTPUT_FILE"

@@ -58,13 +58,29 @@ let
         "script"
         "tooling"
         "Cargo.toml"
-        ".config" # nextest?
+        ".config"
         ".cargo"
       ];
       firstComp = builtins.head (lib.path.subpath.components relPath);
     in
     builtins.elem firstComp topLevelIncludes;
-
+  src = builtins.path {
+    path = ../.;
+    filter = mkIncludeFilter ../.;
+    name = "source";
+  };
+  generate-licenses = stdenv.mkDerivation {
+    name = "generate-licenses";
+    inherit src;
+    nativeBuildInputs = [
+      rustToolchain
+      cargo-about
+    ];
+    # without the env var generate-licenses fails due to crane's fetchCargoVendor, see:
+    # https://github.com/zed-industries/zed/issues/19971#issuecomment-2688455390
+    buildPhase = "ALLOW_MISSING_LICENSES=yes bash script/generate-licenses licenses.md";
+    installPhase = "mv licenses.md $out";
+  };
   craneLib = crane.overrideToolchain rustToolchain;
   gpu-lib = if withGLES then libglvnd else vulkan-loader;
   commonArgs =
@@ -75,12 +91,7 @@ let
     rec {
       pname = "zed-editor";
       version = zedCargoLock.package.version + "-nightly";
-      src = builtins.path {
-        path = ../.;
-        filter = mkIncludeFilter ../.;
-        name = "source";
-      };
-
+      inherit src;
       cargoLock = ../Cargo.lock;
 
       nativeBuildInputs =
@@ -91,7 +102,6 @@ let
           perl
           pkg-config
           protobuf
-          cargo-about
           rustPlatform.bindgenHook
         ]
         ++ lib.optionals stdenv'.hostPlatform.isLinux [ makeWrapper ]
@@ -234,12 +244,8 @@ craneLib.buildPackage (
     inherit cargoArtifacts;
 
     dontUseCmakeConfigure = true;
-
-    # without the env var generate-licenses fails due to crane's fetchCargoVendor, see:
-    # https://github.com/zed-industries/zed/issues/19971#issuecomment-2688455390
-    # TODO: put this in a separate derivation that depends on src to avoid running it on every build
     preBuild = ''
-      ALLOW_MISSING_LICENSES=yes bash script/generate-licenses
+      cp ${generate-licenses}/licenses.md assets
       echo nightly > crates/zed/RELEASE_CHANNEL
     '';
 
